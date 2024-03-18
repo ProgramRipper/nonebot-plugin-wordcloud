@@ -29,7 +29,7 @@ nb-cli = "^1.4.0"
 nonebug = "^0.3.1"
 nonebug-saa = "^0.4.0"
 nonebot-adapter-onebot = "^2.2.4"
-nonebot-plugin-orm = { extras = ["default"], version = ">=0.7.0" }
+nonebot-plugin-orm = {extras = ["mysql", "postgresql", "sqlite"], version = ">=0.7.0"}
 nonebot-plugin-datastore = "^1.2.0"
 pytest-cov = "^4.0.0"
 pytest-xdist = "^3.1.0"
