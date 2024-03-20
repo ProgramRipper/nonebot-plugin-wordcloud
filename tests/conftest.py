@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import nonebot
@@ -11,10 +12,8 @@ from sqlalchemy import StaticPool, delete
 
 def pytest_configure(config: pytest.Config) -> None:
     config.stash[NONEBOT_INIT_KWARGS] = {
-        "sqlalchemy_database_url": "sqlite+aiosqlite://",
         "sqlalchemy_engine_options": {"poolclass": StaticPool},
         "driver": "~fastapi+~httpx",
-        "alembic_startup_check": False,
     }
 
 
@@ -25,7 +24,6 @@ async def app(tmp_path: Path, mocker: MockerFixture):
     wordcloud_dir = tmp_path / "wordcloud"
     wordcloud_dir.mkdir()
     mocker.patch("nonebot_plugin_wordcloud.config.DATA_DIR", wordcloud_dir)
-    mocker.patch("nonebot_plugin_orm._data_dir", tmp_path / "orm")
     from nonebot_plugin_orm import get_session, init_orm
 
     from nonebot_plugin_wordcloud.schedule import schedule_service

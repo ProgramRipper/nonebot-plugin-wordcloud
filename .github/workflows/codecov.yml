@@ -1,19 +1,24 @@
-name: Test
+name: Code Coverage
 
 on:
   push:
     branches:
-      - main
+      - "main"
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-
+    name: Test
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.9', '3.10', '3.11', '3.12']
-        db: ['sqlite+aiosqlite:///db.sqlite3']
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        db: ["sqlite+aiosqlite:///db.sqlite3"]
 
         include:
           - os: ubuntu-latest
@@ -24,9 +29,7 @@ jobs:
       fail-fast: false
 
     env:
-      OS: ${{ matrix.os }}
-      PYTHON_VERSION: ${{ matrix.python-version }}
-      SQLALCHEMY_DATABASE_URL: ${{ matrix.db }}
+      LOG_LEVEL: DEBUG
 
     services:
       postgresql:
@@ -37,7 +40,6 @@ jobs:
           POSTGRES_DB: postgres
         ports:
           - 5432:5432
-
       mysql:
         image: ${{ startsWith(matrix.db, 'mysql') && 'mysql' || '' }}
         env:
@@ -47,16 +49,29 @@ jobs:
           MYSQL_DATABASE: mymysql
         ports:
           - 3306:3306
-
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v5
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set timezone
+        uses: MathRobin/set-timezone@089a978eb83af183f6225bbfc010df73e083d523
+        with:
+          timezoneLinux: "Asia/Shanghai"
+          timezoneMacos: "Asia/Shanghai"
+          timezoneWindows: "China Standard Time"
+
+      - name: Set up Python
+        uses: he0119/setup-python@main
+        with:
+          python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: poetry install
+
+      - run: echo "SQLALCHEMY_DATABASE_URL=${{ matrix.db }}" > .env
 
       - name: Run migrations
-        run: pipx run nb-cli orm upgrade
+        run: poetry run nb orm upgrade
 
       - name: Run tests
-        run: pytest -n auto
+        run: poetry run pytest -n auto --cov=nonebot_plugin_wordcloud --cov-report xml
